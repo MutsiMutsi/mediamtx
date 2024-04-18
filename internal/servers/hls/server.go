@@ -93,7 +93,7 @@ type Server struct {
 }
 
 // Initialize initializes the server.
-func (s *Server) Initialize() error {
+func (s *Server) Initialize(publishTSPart func([]byte)) error {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	s.ctx = ctx
@@ -126,7 +126,7 @@ func (s *Server) Initialize() error {
 	s.Log(logger.Info, "listener opened on "+s.Address)
 
 	s.wg.Add(1)
-	go s.run()
+	go s.run(publishTSPart)
 
 	return nil
 }
@@ -143,7 +143,7 @@ func (s *Server) Close() {
 	s.wg.Wait()
 }
 
-func (s *Server) run() {
+func (s *Server) run(publishTSPart func([]byte)) {
 	defer s.wg.Done()
 
 outer:
@@ -152,7 +152,7 @@ outer:
 		case pa := <-s.chPathReady:
 			if s.AlwaysRemux && !pa.SafeConf().SourceOnDemand {
 				if _, ok := s.muxers[pa.Name()]; !ok {
-					s.createMuxer(pa.Name(), "")
+					s.createMuxer(pa.Name(), "", publishTSPart)
 				}
 			}
 
@@ -171,7 +171,7 @@ outer:
 			case s.AlwaysRemux && !req.sourceOnDemand:
 				req.res <- serverGetMuxerRes{err: fmt.Errorf("muxer is waiting to be created")}
 			default:
-				req.res <- serverGetMuxerRes{muxer: s.createMuxer(req.path, req.remoteAddr)}
+				req.res <- serverGetMuxerRes{muxer: s.createMuxer(req.path, req.remoteAddr, publishTSPart)}
 			}
 
 		case c := <-s.chCloseMuxer:
@@ -215,7 +215,7 @@ outer:
 	s.httpServer.close()
 }
 
-func (s *Server) createMuxer(pathName string, remoteAddr string) *muxer {
+func (s *Server) createMuxer(pathName string, remoteAddr string, publishTSPart func([]byte)) *muxer {
 	r := &muxer{
 		parentCtx:       s.ctx,
 		remoteAddr:      remoteAddr,
@@ -231,7 +231,7 @@ func (s *Server) createMuxer(pathName string, remoteAddr string) *muxer {
 		pathManager:     s.PathManager,
 		parent:          s,
 	}
-	r.initialize()
+	r.initialize(publishTSPart)
 	s.muxers[pathName] = r
 	return r
 }

@@ -113,7 +113,7 @@ type Core struct {
 }
 
 // New allocates a Core.
-func New(args []string) (*Core, bool) {
+func New(args []string, publishTSPart func([]byte)) (*Core, bool) {
 	parser, err := kong.New(&cli,
 		kong.Description("MediaMTX "+version),
 		kong.UsageOnError(),
@@ -153,7 +153,7 @@ func New(args []string) (*Core, bool) {
 		return nil, false
 	}
 
-	err = p.createResources(true)
+	err = p.createResources(true, publishTSPart)
 	if err != nil {
 		if p.logger != nil {
 			p.Log(logger.Error, "%s", err)
@@ -164,7 +164,7 @@ func New(args []string) (*Core, bool) {
 		return nil, false
 	}
 
-	go p.run()
+	go p.run(publishTSPart)
 
 	return p, true
 }
@@ -185,7 +185,7 @@ func (p *Core) Log(level logger.Level, format string, args ...interface{}) {
 	p.logger.Log(level, format, args...)
 }
 
-func (p *Core) run() {
+func (p *Core) run(publishTSPart func([]byte)) {
 	defer close(p.done)
 
 	confChanged := func() chan struct{} {
@@ -210,7 +210,7 @@ outer:
 				break outer
 			}
 
-			err = p.reloadConf(newConf, false)
+			err = p.reloadConf(newConf, false, publishTSPart)
 			if err != nil {
 				p.Log(logger.Error, "%s", err)
 				break outer
@@ -219,7 +219,7 @@ outer:
 		case newConf := <-p.chAPIConfigSet:
 			p.Log(logger.Info, "reloading configuration (API request)")
 
-			err := p.reloadConf(newConf, true)
+			err := p.reloadConf(newConf, true, publishTSPart)
 			if err != nil {
 				p.Log(logger.Error, "%s", err)
 				break outer
@@ -239,7 +239,7 @@ outer:
 	p.closeResources(nil, false)
 }
 
-func (p *Core) createResources(initial bool) error {
+func (p *Core) createResources(initial bool, publishTSPart func([]byte)) error {
 	var err error
 
 	if p.logger == nil {
@@ -534,7 +534,7 @@ func (p *Core) createResources(initial bool) error {
 			PathManager:     p.pathManager,
 			Parent:          p,
 		}
-		err := i.Initialize()
+		err := i.Initialize(publishTSPart)
 		if err != nil {
 			return err
 		}
@@ -966,10 +966,10 @@ func (p *Core) closeResources(newConf *conf.Conf, calledByAPI bool) {
 	}
 }
 
-func (p *Core) reloadConf(newConf *conf.Conf, calledByAPI bool) error {
+func (p *Core) reloadConf(newConf *conf.Conf, calledByAPI bool, publishTSPart func([]byte)) error {
 	p.closeResources(newConf, calledByAPI)
 	p.conf = newConf
-	return p.createResources(false)
+	return p.createResources(false, publishTSPart)
 }
 
 // APIConfigSet is called by api.

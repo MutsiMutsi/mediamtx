@@ -39,7 +39,7 @@ type muxerInstance struct {
 	hmuxer *gohlslib.Muxer
 }
 
-func (mi *muxerInstance) initialize() error {
+func (mi *muxerInstance) initialize(publishTSPart func([]byte)) error {
 	mi.writer = asyncwriter.New(mi.writeQueueSize, mi)
 
 	videoTrack := mi.createVideoTrack()
@@ -67,7 +67,7 @@ func (mi *muxerInstance) initialize() error {
 		Directory:       muxerDirectory,
 	}
 
-	err := mi.hmuxer.Start()
+	err := mi.hmuxer.Start(publishTSPart)
 	if err != nil {
 		mi.stream.RemoveReader(mi.writer)
 		return err

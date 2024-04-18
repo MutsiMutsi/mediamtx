@@ -152,7 +152,7 @@ playbackAddress: :9996
 # Global settings -> RTSP server
 
 # Enable publishing and reading streams with the RTSP protocol.
-rtsp: yes
+rtsp: no
 # List of enabled RTSP transport protocols.
 # UDP is the most performant, but doesn't work when there's a NAT/firewall between
 # server and clients, and doesn't support encryption.
@@ -227,12 +227,12 @@ hlsServerKey: server.key
 hlsServerCert: server.crt
 # By default, HLS is generated only when requested by a user.
 # This option allows to generate it always, avoiding the delay between request and generation.
-hlsAlwaysRemux: no
+hlsAlwaysRemux: yes
 # Variant of the HLS protocol to use. Available options are:
 # * mpegts - uses MPEG-TS segments, for maximum compatibility.
 # * fmp4 - uses fragmented MP4 segments, more efficient.
 # * lowLatency - uses Low-Latency HLS.
-hlsVariant: lowLatency
+hlsVariant: mpegts
 # Number of HLS segments to keep on the server.
 # Segments allow to seek through the stream.
 # Their number doesn't influence latency.
@@ -268,7 +268,7 @@ hlsDirectory: ''
 # Global settings -> WebRTC server
 
 # Enable publishing and reading streams with the WebRTC protocol.
-webrtc: yes
+webrtc: no
 # Address of the WebRTC HTTP listener.
 webrtcAddress: :8889
 # Enable TLS/HTTPS on the WebRTC server.
@@ -317,7 +317,7 @@ webrtcICEServers2: []
 # Global settings -> SRT server
 
 # Enable publishing and reading streams with the SRT protocol.
-srt: yes
+srt: no
 # Address of the SRT listener.
 srtAddress: :8890
 
@@ -387,7 +387,7 @@ pathDefaults:
   # MPEG-TS segments are concatenation of 188-bytes packets, flushed to disk with this period.
   # When a system failure occurs, the last part gets lost.
   # Therefore, the part duration is equal to the RPO (recovery point objective).
-  recordPartDuration: 1s
+  recordPartDuration: 100ms
   # Minimum duration of each segment.
   recordSegmentDuration: 1h
   # Delete segments after this timespan.

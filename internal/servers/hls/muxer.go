@@ -71,7 +71,7 @@ type muxer struct {
 	chGetInstance chan muxerGetInstanceReq
 }
 
-func (m *muxer) initialize() {
+func (m *muxer) initialize(publishTSPart func([]byte)) {
 	ctx, ctxCancel := context.WithCancel(m.parentCtx)
 
 	m.ctx = ctx
@@ -89,7 +89,7 @@ func (m *muxer) initialize() {
 	}())
 
 	m.wg.Add(1)
-	go m.run()
+	go m.run(publishTSPart)
 }
 
 func (m *muxer) Close() {
@@ -106,10 +106,10 @@ func (m *muxer) PathName() string {
 	return m.pathName
 }
 
-func (m *muxer) run() {
+func (m *muxer) run(publishTSPart func([]byte)) {
 	defer m.wg.Done()
 
-	err := m.runInner()
+	err := m.runInner(publishTSPart)
 
 	m.ctxCancel()
 
@@ -118,7 +118,7 @@ func (m *muxer) run() {
 	m.Log(logger.Info, "destroyed: %v", err)
 }
 
-func (m *muxer) runInner() error {
+func (m *muxer) runInner(publishTSPart func([]byte)) error {
 	path, stream, err := m.pathManager.AddReader(defs.PathAddReaderReq{
 		Author: m,
 		AccessRequest: defs.PathAccessRequest{
@@ -150,7 +150,7 @@ func (m *muxer) runInner() error {
 		bytesSent:       m.bytesSent,
 		parent:          m,
 	}
-	err = mi.initialize()
+	err = mi.initialize(publishTSPart)
 	if err != nil {
 		if m.remoteAddr != "" || errors.Is(err, errNoSupportedCodecs) {
 			return err
@@ -208,7 +208,7 @@ func (m *muxer) runInner() error {
 				bytesSent:       m.bytesSent,
 				parent:          m,
 			}
-			err := mi.initialize()
+			err := mi.initialize(publishTSPart)
 			if err != nil {
 				m.Log(logger.Error, err.Error())
 				mi = nil

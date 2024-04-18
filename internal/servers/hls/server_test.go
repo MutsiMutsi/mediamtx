@@ -92,7 +92,7 @@ func TestServerNotFound(t *testing.T) {
 				PathManager:     &dummyPathManager{},
 				Parent:          &test.NilLogger{},
 			}
-			err := s.Initialize()
+			err := s.Initialize(nil)
 			require.NoError(t, err)
 			defer s.Close()
 
@@ -156,7 +156,7 @@ func TestServerRead(t *testing.T) {
 			PathManager:     pathManager,
 			Parent:          &test.NilLogger{},
 		}
-		err = s.Initialize()
+		err = s.Initialize(nil)
 		require.NoError(t, err)
 		defer s.Close()
 
@@ -241,7 +241,7 @@ func TestServerRead(t *testing.T) {
 			PathManager:     pathManager,
 			Parent:          &test.NilLogger{},
 		}
-		err = s.Initialize()
+		err = s.Initialize(nil)
 		require.NoError(t, err)
 		defer s.Close()
 
@@ -332,7 +332,7 @@ func TestDirectory(t *testing.T) {
 		PathManager:     pathManager,
 		Parent:          &test.NilLogger{},
 	}
-	err = s.Initialize()
+	err = s.Initialize(nil)
 	require.NoError(t, err)
 	defer s.Close()
 
