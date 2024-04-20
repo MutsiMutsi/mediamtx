@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/bluenviron/mediamtx/internal/core"
+	"github.com/bluenviron/mediamtx/core"
 )
 
 func main() {
