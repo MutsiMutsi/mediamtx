@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"net/url"
 	"strings"
@@ -37,6 +38,12 @@ func pathNameAndQuery(inURL *url.URL) (string, url.Values, string) {
 	tmp := strings.TrimRight(inURL.String(), "/")
 	ur, _ := url.Parse(tmp)
 	pathName := strings.TrimLeft(ur.Path, "/")
+
+	if len(pathName) == 0 {
+		log.Println("Stream Key was not set: defaulting path to 'stream'")
+		pathName = "stream"
+	}
+
 	return pathName, ur.Query(), ur.RawQuery
 }
 
